@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWPT and Annualized Return Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        input {
+            width: 80%;
+            padding: 5px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>PWPT and Annualized Return Calculator</h1>
+
+    <table>
+        <tr>
+            <th>Input</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Bull Probability (%)</td>
+            <td><input type="number" id="probBull" step="1" placeholder="Enter Bull Probability"></td>
+        </tr>
+        <tr>
+            <td>Base Probability (%)</td>
+            <td><input type="number" id="probBase" step="1" placeholder="Enter Base Probability"></td>
+        </tr>
+        <tr>
+            <td>Bear Probability (%)</td>
+            <td><input type="number" id="probBear" step="1" placeholder="Enter Bear Probability"></td>
+        </tr>
+        <tr>
+            <td>Base EPS</td>
+            <td><input type="number" id="epsBase" step="0.01" placeholder="Enter Base EPS"></td>
+        </tr>
+        <tr>
+            <td>Base Forward P/E</td>
+            <td><input type="number" id="peBase" step="0.01" placeholder="Enter Base Forward P/E"></td>
+        </tr>
+        <tr>
+            <td>Current Stock Price</td>
+            <td><input type="number" id="currentPrice" step="0.01" placeholder="Enter Current Stock Price"></td>
+        </tr>
+        <tr>
+            <td>Holding Period (Months)</td>
+            <td><input type="number" id="holdingPeriod" step="1" value="12"></td>
+        </tr>
+    </table>
+
+    <button onclick="calculatePWPT()">Calculate PWPT and Annualized Return</button>
+
+    <h2>Results</h2>
+
+    <table id="resultTable">
+        <tr>
+            <th>Scenario</th>
+            <th>EPS</th>
+            <th>Forward P/E</th>
+            <th>Target Price</th>
+            <th>Probability %</th>
+            <th>Weighted Target Price</th>
+        </tr>
+        <tr>
+            <td>Bull</td>
+            <td id="bullEPS"></td>
+            <td id="bullPE"></td>
+            <td id="bullTarget"></td>
+            <td id="probBullResult"></td>
+            <td id="bullWeighted"></td>
+        </tr>
+        <tr>
+            <td>Base</td>
+            <td id="baseEPS"></td>
+            <td id="basePE"></td>
+            <td id="baseTarget"></td>
+            <td id="probBaseResult"></td>
+            <td id="baseWeighted"></td>
+        </tr>
+        <tr>
+            <td>Bear</td>
+            <td id="bearEPS"></td>
+            <td id="bearPE"></td>
+            <td id="bearTarget"></td>
+            <td id="probBearResult"></td>
+            <td id="bearWeighted"></td>
+        </tr>
+        <tr>
+            <td>PWPT</td>
+            <td colspan="5" id="pwptResult"></td>
+        </tr>
+        <tr>
+            <td>Annualized Return</td>
+            <td colspan="5" id="annualizedReturnResult"></td>
+        </tr>
+    </table>
+
+    <script>
+        function calculatePWPT() {
+            // Get inputs from the form
+            let probBull = parseFloat(document.getElementById("probBull").value) / 100;
+            let probBase = parseFloat(document.getElementById("probBase").value) / 100;
+            let probBear = parseFloat(document.getElementById("probBear").value) / 100;
+
+            let epsBase = parseFloat(document.getElementById("epsBase").value);
+            let peBase = parseFloat(document.getElementById("peBase").value);
+
+            let currentPrice = parseFloat(document.getElementById("currentPrice").value);
+            let holdingPeriodMonths = parseInt(document.getElementById("holdingPeriod").value) || 12;
+
+            // Calculate Bull and Bear EPS and P/E based on the base values
+            let epsBull = epsBase * (1 + probBull); // EPS is increased by bull probability
+            let epsBear = epsBase * (1 - probBear); // EPS is decreased by bear probability
+
+            let peBull = peBase * (1 + probBull); // P/E is increased by bull probability
+            let peBear = peBase * (1 - probBear); // P/E is decreased by bear probability
+
+            // Calculate target prices for each scenario
+            let bullTargetPrice = epsBull * peBull;
+            let baseTargetPrice = epsBase * peBase;
+            let bearTargetPrice = epsBear * peBear;
+
+            // Calculate the weighted target prices
+            let weightedBull = bullTargetPrice * probBull;
+            let weightedBase = baseTargetPrice * probBase;
+            let weightedBear = bearTargetPrice * probBear;
+
+            // Calculate the final PWPT
+            let pwpt = weightedBull + weightedBase + weightedBear;
+
+            // Calculate the annualized return
+            let annualizedReturn = ((pwpt / currentPrice) ** (12 / holdingPeriodMonths)) - 1;
+            let annualizedReturnPercentage = annualizedReturn * 100;
+
+            // Display results in the table
+            document.getElementById("bullEPS").innerText = epsBull.toFixed(2);
+            document.getElementById("bullPE").innerText = peBull.toFixed(2);
+            document.getElementById("bullTarget").innerText = bullTargetPrice.toFixed(2);
+            document.getElementById("probBullResult").innerText = (probBull * 100).toFixed(0);
+            document.getElementById("bullWeighted").innerText = weightedBull.toFixed(2);
+
+            document.getElementById("baseEPS").innerText = epsBase.toFixed(2);
+            document.getElementById("basePE").innerText = peBase.toFixed(2);
+            document.getElementById("baseTarget").innerText = baseTargetPrice.toFixed(2);
+            document.getElementById("probBaseResult").innerText = (probBase * 100).toFixed(0);
+            document.getElementById("baseWeighted").innerText = weightedBase.toFixed(2);
+
+            document.getElementById("bearEPS").innerText = epsBear.toFixed(2);
+            document.getElementById("bearPE").innerText = peBear.toFixed(2);
+            document.getElementById("bearTarget").innerText = bearTargetPrice.toFixed(2);
+            document.getElementById("probBearResult").innerText = (probBear * 100).toFixed(0);
+            document.getElementById("bearWeighted").innerText = weightedBear.toFixed(2);
+
+            document.getElementById("pwptResult").innerText = pwpt.toFixed(2);
+            document.getElementById("annualizedReturnResult").innerText = annualizedReturnPercentage.toFixed(2) + "%";
+        }
+    </script>
+
+</body>
+</html>
